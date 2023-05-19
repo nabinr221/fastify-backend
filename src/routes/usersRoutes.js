@@ -1,3 +1,4 @@
+const fastify = require("fastify")();
 const {
   getUsersSchema,
   getUserDetailsSchema,
@@ -13,37 +14,39 @@ const {
   deleteUsertHandler,
 } = require("../controllers/handlers/usersHandler");
 
-const getUsersOpts = {
-  schema: getUsersSchema,
-  handler: getUsersHandler,
-};
-
-const getUserDetailsOpts = {
-  schema: getUserDetailsSchema,
-  handler: getUserDetailsHandler,
-};
-
-const addUserOpts = {
-  schema: addUserSchema,
-  handler: addUserHandler,
-};
-
-const updateUserOpts = {
-  schema: updateUserSchema, // will be created in schemas/posts.js
-  handler: updateUserHandler, // will be created in handlers/posts.js
-};
-
-const deleteUserOpts = {
-  schema: deleteUserSchema, // will be created in schemas/posts.js
-  handler: deleteUsertHandler, // will be created in handlers/posts.js
-};
-
 const usersRoutes = async (fastify, opts, done) => {
-  await fastify.get("/api/users", getUsersOpts);
-  await fastify.get("/api/user/:id", getUserDetailsOpts);
-  await fastify.post("/api/user/add", addUserOpts);
-  await fastify.put("/api/user/edit/:id", updateUserOpts);
-  await fastify.delete("/api/users/:id", deleteUserOpts);
+  const connect = fastify.mysql;
+
+  const getUsersOpts = {
+    schema: getUsersSchema,
+    handler: getUsersHandler.bind(null, connect),
+  };
+
+  const getUserDetailsOpts = {
+    schema: getUserDetailsSchema,
+    handler: getUserDetailsHandler.bind(null, connect),
+  };
+
+  const addUserOpts = {
+    schema: addUserSchema,
+    handler: addUserHandler.bind(null, connect),
+  };
+
+  const updateUserOpts = {
+    schema: updateUserSchema,
+    handler: updateUserHandler.bind(null, connect),
+  };
+
+  const deleteUserOpts = {
+    schema: deleteUserSchema,
+    handler: deleteUsertHandler.bind(null, connect),
+  };
+
+  fastify.post("/api/users", addUserOpts);
+  fastify.get("/api/users", getUsersOpts);
+  fastify.get("/api/users/:id", getUserDetailsOpts);
+  fastify.put("/api/users/edit/:id", updateUserOpts);
+  fastify.delete("/api/users/:id", deleteUserOpts);
 
   done();
 };

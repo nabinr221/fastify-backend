@@ -1,33 +1,52 @@
-const users = require("../../cloud/users");
+const fastify = require("fastify");
+// const users = require("../../cloud/users");
 
 // handler for users list
-const getUsersHandler = (req, reply) => {
-  reply.send(users);
+const getUsersHandler = (connect, req, reply) => {
+  try {
+    // const userData =  connect.query("SELECT * FROM users");
+    // console.log(userData, "asfasf");
+    connect.query("SELECT * FROM users", function onResult(err, result) {
+      reply.send(err || result);
+    });
+  } catch (err) {
+    console.log("\n err", err);
+  }
 };
 
 // handler for user details
-const getUserDetailsHandler = async (req, reply) => {
-  const { id } = req.params;
-  const userData = await users.filter((user) => {
-    return user.id === id;
-  })[0];
-
-  if (!userData) {
-    return reply.status(404).send({
-      errorMsg: "Post not found",
-    });
+const getUserDetailsHandler = (connect, req, reply) => {
+  try {
+    connect.query(
+      "SELECT * FROM users WHERE id=?",
+      [req.params.id],
+      function onResult(err, result) {
+        reply.send(err || result);
+      }
+    );
+  } catch (error) {
+    console.log(error);
   }
-
-  return reply.send(userData);
 };
 
-const addUserHandler = (req, reply) => {
-  const { username, password } = req.body;
-  const id = users.length + 1;
-  users.push({ id, username, password });
-  reply.send("user added");
-};
+const addUserHandler = (connect, req, reply) => {
+  try {
+    const { id, name, gender, address } = req.body;
+    const userData = connect.query(
+      "INSERT INTO users( id, name, gender, address) values(?, ?, ?, ?) ",
+      [id, name, gender, address]
+    );
+    console.log(userData);
 
+    if (userData) {
+      reply.send("added");
+    } else {
+      reply.send("added");
+    }
+  } catch (error) {
+    console.log(error);
+  }
+};
 const updateUserHandler = (req, reply) => {
   const { username, password } = req.body;
   const { id } = req.params;
@@ -46,20 +65,18 @@ const updateUserHandler = (req, reply) => {
   return reply.send("user updated");
 };
 
-const deleteUsertHandler = (req, reply) => {
-  const { id } = req.params;
-
-  const userIndex = users.findIndex((user) => {
-    return user.id === id;
-  });
-
-  if (userIndex === -1) {
-    return reply.status(404).send(new Error("Post doesn't exist"));
+const deleteUsertHandler = (connect, req, reply) => {
+  try {
+    connect.query(
+      "DELETE FROM users WHERE id = ?",
+      [req.params.id],
+      function onResult(err, result) {
+        reply.send(err || result);
+      }
+    );
+  } catch (error) {
+    console.log(error);
   }
-
-  users.splice(userIndex, 1);
-
-  return reply.send("user deleted");
 };
 
 module.exports = {
